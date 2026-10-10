@@ -23,6 +23,12 @@ La configuración predeterminada usa `sqlite:///parking.db`. Para cambiarla, def
 python -m pytest
 ```
 
+## Desplegar el servidor MCP
+
+En FastMCP Cloud, configura `server.py` como **Entry point**. Ese archivo expone
+el servidor `mcp` implementado en `flaskr/infrastructure/McpServers/ParkingMcpServer.py`.
+Después de desplegarlo, la plataforma proporcionará el endpoint MCP.
+
 ## Uso del servicio
 
 ```python
