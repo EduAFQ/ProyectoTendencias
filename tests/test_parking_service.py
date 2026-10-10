@@ -21,8 +21,10 @@ def test_registra_entrada_salida_y_reutiliza_plaza(servicio):
     estancia = servicio.registrar_entrada(vehiculo.id, plaza.id, usuario.id, entrada)
 
     assert estancia.entrada == entrada
+    assert servicio.listar_plazas_activas() == [plaza]
     assert servicio.listar_plazas(disponibles=True) == []
     assert servicio.registrar_salida(estancia.id, entrada + timedelta(hours=1)).salida == entrada + timedelta(hours=1)
+    assert servicio.listar_plazas_activas() == []
     assert servicio.listar_plazas(disponibles=True) == [plaza]
     assert servicio.registrar_entrada(vehiculo.id, plaza.id, usuario.id).id is not None
 

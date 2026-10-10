@@ -47,6 +47,16 @@ class ParkingServices:
             return plazas
         return [plaza for plaza in plazas if self.repositorio.obtener_estancia_activa_plaza(plaza.id) is None]
 
+    def listar_plazas_activas(self):
+        plazas_activas = {
+            estancia.plaza_id for estancia in self.repositorio.listar_estancias_activas()
+        }
+        return [
+            plaza
+            for plaza in self.repositorio.listar_plazas()
+            if plaza.id in plazas_activas
+        ]
+
     def actualizar_plaza(self, plaza_id, codigo):
         plaza = self._requerir(self.repositorio.obtener_plaza(plaza_id), "No existe la plaza")
         actualizada = Plaza(self._texto_requerido(codigo, "código de plaza").upper(), plaza.id)
