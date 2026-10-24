@@ -1,9 +1,11 @@
 from flask import Flask
+from flask import send_from_directory
 
 from flaskr.configuracion import Configuracion
 from flaskr.infrastructure.adaptadorSalida.parkingRepositorySQL import ParkingRepositorySQL
 from flaskr.infrastructure.db.engine import crear_engine
 from flaskr.infrastructure.db.session import crear_fabrica_sesiones
+from flaskr.api import api
 
 
 def create_app(test_config=None):
@@ -17,4 +19,10 @@ def create_app(test_config=None):
     app.extensions["parking_engine"] = engine
     app.extensions["parking_session_factory"] = session_factory
     app.extensions["parking_repository"] = ParkingRepositorySQL(session_factory)
+    app.register_blueprint(api)
+
+    @app.get("/")
+    def index():
+        return send_from_directory(app.static_folder, "index.html")
+
     return app

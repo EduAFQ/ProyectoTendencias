@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from flaskr.services.parkingServices import Conflicto, NoEncontrado, ParkingServices, Validacion
+from flaskr.services.parkingServices import Conflicto, NoEncontrado, Validacion
 from flaskr.domain.models import Parking
 from flaskr.infrastructure.adaptadorSalida.parkingRepositorySQL import ParkingRepositorySQL
 

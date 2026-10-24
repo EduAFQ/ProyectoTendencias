@@ -17,17 +17,29 @@ class ParkingRepositorySQL(ParkingRepository):
     def obtener_cliente(self, cliente_id):
         return self._obtener(ClienteORM, cliente_id, self._cliente)
 
+    def listar_clientes(self):
+        with self.session_factory() as session:
+            return [self._cliente(row) for row in session.scalars(select(ClienteORM).order_by(ClienteORM.nombre))]
+
     def crear_usuario(self, usuario):
         return self._crear(UsuarioORM(nombre=usuario.nombre), self._usuario)
 
     def obtener_usuario(self, usuario_id):
         return self._obtener(UsuarioORM, usuario_id, self._usuario)
 
+    def listar_usuarios(self):
+        with self.session_factory() as session:
+            return [self._usuario(row) for row in session.scalars(select(UsuarioORM).order_by(UsuarioORM.nombre))]
+
     def crear_vehiculo(self, vehiculo):
         return self._crear(VehiculoORM(matricula=vehiculo.matricula, cliente_id=vehiculo.cliente_id), self._vehiculo)
 
     def obtener_vehiculo(self, vehiculo_id):
         return self._obtener(VehiculoORM, vehiculo_id, self._vehiculo)
+
+    def listar_vehiculos(self):
+        with self.session_factory() as session:
+            return [self._vehiculo(row) for row in session.scalars(select(VehiculoORM).order_by(VehiculoORM.matricula))]
 
     def crear_plaza(self, plaza):
         return self._crear(PlazaORM(codigo=plaza.codigo), self._plaza)

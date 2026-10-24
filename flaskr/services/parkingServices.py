@@ -28,14 +28,23 @@ class ParkingServices:
         email = email.strip().lower() if email else None
         return self._crear(lambda: self.repositorio.crear_cliente(Cliente(nombre.strip(), email)), "El email ya está registrado")
 
+    def listar_clientes(self):
+        return self.repositorio.listar_clientes()
+
     def crear_usuario(self, nombre):
         self._texto_requerido(nombre, "nombre")
         return self.repositorio.crear_usuario(Usuario(nombre.strip()))
+
+    def listar_usuarios(self):
+        return self.repositorio.listar_usuarios()
 
     def crear_vehiculo(self, matricula, cliente_id):
         placa = self._texto_requerido(matricula, "matrícula").replace(" ", "").upper()
         self._requerir(self.repositorio.obtener_cliente(cliente_id), "No existe el cliente")
         return self._crear(lambda: self.repositorio.crear_vehiculo(Vehiculo(placa, cliente_id)), "La matrícula ya está registrada")
+
+    def listar_vehiculos(self):
+        return self.repositorio.listar_vehiculos()
 
     def crear_plaza(self, codigo):
         codigo_normalizado = self._texto_requerido(codigo, "código de plaza").upper()

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f6f8">
+    <title>Parkia | Gestión de parqueadero</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="/" aria-label="Parkia, inicio">
+          <span class="brand-mark">P</span>
+          <span>parkia<small>GESTIÓN DE PARQUEADERO</small></span>
+        </a>
+        <p class="nav-label">MENÚ PRINCIPAL</p>
+        <nav class="navigation" aria-label="Navegación principal">
+          <button class="nav-item active" data-view-target="overview"><span>▦</span>Resumen</button>
+          <button class="nav-item" data-view-target="entries"><span>↔</span>Entradas y salidas</button>
+          <button class="nav-item" data-view-target="people"><span>♙</span>Clientes y vehículos</button>
+          <button class="nav-item" data-view-target="spaces"><span>▤</span>Plazas</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <span class="status-dot"></span>
+          <div><strong>Servicio activo</strong><small>Panel de operación</small></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand"><span class="brand-mark">P</span> parkia</div>
+          <div class="breadcrumb">Parqueadero <span>/</span> <strong id="page-title">Resumen</strong></div>
+          <button class="button button-primary top-action" data-view-target="entries">＋ <span>Registrar entrada</span></button>
+        </header>
+
+        <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+        <section class="view active" id="view-overview">
+          <div class="page-heading">
+            <div><p class="eyebrow">CENTRO DE OPERACIONES</p><h1>Resumen del parqueadero</h1><p class="muted">Estado de ocupación y actividad en tiempo real.</p></div>
+            <div class="today-chip"><span class="live-dot"></span> Operación en curso</div>
+          </div>
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon icon-dark">▤</div><div class="stat-label">Capacidad total</div><div class="stat-value" id="stat-total">—</div><div class="stat-foot">plazas registradas</div></article>
+            <article class="stat-card"><div class="stat-icon icon-green">↗</div><div class="stat-label">Plazas disponibles</div><div class="stat-value" id="stat-available">—</div><div class="stat-foot">listas para recibir vehículos</div></article>
+            <article class="stat-card"><div class="stat-icon icon-orange">◉</div><div class="stat-label">Plazas ocupadas</div><div class="stat-value" id="stat-occupied">—</div><div class="stat-foot">estancias activas</div></article>
+          </div>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Vehículos en el parqueadero</h2><p class="muted">Estancias que continúan activas</p></div><button class="text-button" data-view-target="entries">Ver entradas y salidas →</button></div>
+            <div class="table-wrap"><table><thead><tr><th>VEHÍCULO</th><th>CLIENTE</th><th>PLAZA</th><th>HORA DE ENTRADA</th><th>OPERADOR</th><th></th></tr></thead><tbody id="active-stays"></tbody></table></div>
+            <div class="empty-state" id="empty-overview" hidden><span>✓</span><strong>Todo despejado</strong><p>No hay vehículos dentro del parqueadero.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-entries">
+          <div class="page-heading"><div><p class="eyebrow">OPERACIÓN</p><h1>Entradas y salidas</h1><p class="muted">Registra un ingreso y gestiona las estancias activas.</p></div></div>
+          <section class="panel form-panel">
+            <div class="panel-heading"><div><h2>Registrar entrada</h2><p class="muted">Asigna un vehículo a una plaza disponible.</p></div><span class="form-step">NUEVA ESTANCIA</span></div>
+            <form id="entry-form" class="form-grid">
+              <label>Vehículo<select id="entry-vehicle" name="vehiculo_id" required><option value="">Selecciona una matrícula</option></select></label>
+              <label>Plaza disponible<select id="entry-space" name="plaza_id" required><option value="">Selecciona una plaza</option></select></label>
+              <label class="form-wide">Operador<select id="entry-operator" name="usuario_id" required><option value="">Selecciona un operador</option></select></label>
+              <div class="form-wide inline-create"><label for="new-operator">¿No aparece? Agrega un operador</label><div class="inline-controls"><input id="new-operator" type="text" placeholder="Nombre del operador"><button class="button button-secondary" id="add-operator" type="button">Agregar operador</button></div></div>
+              <div class="form-wide form-actions"><button class="button button-primary" type="submit">Registrar entrada <span>→</span></button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Estancias activas</h2><p class="muted">Registra la salida cuando el vehículo se retire.</p></div><span class="count-badge" id="active-count">0 activas</span></div>
+            <div class="table-wrap"><table><thead><tr><th>VEHÍCULO</th><th>CLIENTE</th><th>PLAZA</th><th>HORA DE ENTRADA</th><th>OPERADOR</th><th>ACCIÓN</th></tr></thead><tbody id="entry-stays"></tbody></table></div>
+            <div class="empty-state" id="empty-entries" hidden><span>↔</span><strong>Sin estancias activas</strong><p>Las nuevas entradas aparecerán aquí.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-people">
+          <div class="page-heading"><div><p class="eyebrow">DIRECTORIO</p><h1>Clientes y vehículos</h1><p class="muted">Mantén la información necesaria para registrar cada entrada.</p></div></div>
+          <div class="two-column">
+            <section class="panel">
+              <div class="panel-heading"><div><h2>Nuevo cliente</h2><p class="muted">Registra un cliente del parqueadero.</p></div></div>
+              <form id="client-form" class="stack-form">
+                <label>Nombre completo<input name="nombre" required maxlength="120" placeholder="Ej. Alex Rivera"></label>
+                <label>Correo electrónico <span class="optional">(opcional)</span><input name="email" type="email" maxlength="255" placeholder="alex@correo.com"></label>
+                <button class="button button-primary" type="submit">Guardar cliente</button>
+              </form>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><div><h2>Nuevo vehículo</h2><p class="muted">Asocia una matrícula con su cliente.</p></div></div>
+              <form id="vehicle-form" class="stack-form">
+                <label>Matrícula<input name="matricula" required maxlength="20" placeholder="ABC 123"></label>
+                <label>Cliente<select id="vehicle-client" name="cliente_id" required><option value="">Selecciona un cliente</option></select></label>
+                <button class="button button-primary" type="submit">Guardar vehículo</button>
+              </form>
+            </section>
+          </div>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Vehículos registrados</h2><p class="muted">Matrículas y clientes asociados.</p></div><span class="count-badge" id="vehicle-count">0 vehículos</span></div>
+            <div class="table-wrap"><table><thead><tr><th>MATRÍCULA</th><th>CLIENTE</th><th>ID DE REGISTRO</th></tr></thead><tbody id="vehicles-table"></tbody></table></div>
+            <div class="empty-state" id="empty-vehicles" hidden><span>＋</span><strong>Aún no hay vehículos</strong><p>Agrega un vehículo para habilitar el registro de entradas.</p></div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Clientes registrados</h2><p class="muted">Directorio de clientes.</p></div><span class="count-badge" id="client-count">0 clientes</span></div>
+            <div class="table-wrap"><table><thead><tr><th>NOMBRE</th><th>CORREO</th><th>ID DE REGISTRO</th></tr></thead><tbody id="clients-table"></tbody></table></div>
+            <div class="empty-state" id="empty-clients" hidden><span>♙</span><strong>Aún no hay clientes</strong><p>Los clientes que registres aparecerán aquí.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-spaces">
+          <div class="page-heading"><div><p class="eyebrow">CONFIGURACIÓN</p><h1>Administrar plazas</h1><p class="muted">Consulta y actualiza la capacidad del parqueadero.</p></div></div>
+          <section class="panel form-panel">
+            <div class="panel-heading"><div><h2 id="space-form-title">Agregar una plaza</h2><p class="muted">Usa un código único y fácil de identificar.</p></div></div>
+            <form id="space-form" class="inline-form"><label class="sr-only" for="space-code">Código de plaza</label><input id="space-code" name="codigo" maxlength="30" required placeholder="Ej. A-01"><button class="button button-primary" id="space-submit" type="submit">＋ Agregar plaza</button><button class="button button-secondary" id="space-cancel" type="button" hidden>Cancelar</button></form>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Todas las plazas</h2><p class="muted">El estado se actualiza con las estancias activas.</p></div><span class="count-badge" id="space-count">0 plazas</span></div>
+            <div class="space-grid" id="spaces-grid"></div>
+            <div class="empty-state" id="empty-spaces" hidden><span>▤</span><strong>Aún no hay plazas</strong><p>Agrega la primera plaza para empezar a operar.</p></div>
+          </section>
+        </section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

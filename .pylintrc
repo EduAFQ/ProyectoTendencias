@@ -1,0 +1,6 @@
+[MESSAGES CONTROL]
+disable=all
+enable=unused-variable,unused-import,too-many-arguments
+
+[DESIGN]
+max-args=5
