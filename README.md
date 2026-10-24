@@ -38,6 +38,10 @@ La configuración del proyecto aplica `unused-variable`, `unused-import` y
 python -m pylint flaskr tests
 ```
 
+En cada `push` a la rama `development`, GitHub Actions ejecuta Pylint sobre
+`flaskr` y `tests`. El workflow requiere una puntuación superior al 80 %
+(8.01 de 10 o más); una puntuación inferior hace fallar la ejecución.
+
 ## Iniciar la aplicación web
 
 Inicializa primero la base de datos y ejecuta Flask:
