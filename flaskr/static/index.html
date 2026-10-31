@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f4f6f8">
+    <meta name="theme-color" content="#211b3c">
     <title>Parkia | Gestión de parqueadero</title>
     <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/app.js" defer></script>
@@ -13,14 +13,14 @@
       <aside class="sidebar">
         <a class="brand" href="/" aria-label="Parkia, inicio">
           <span class="brand-mark">P</span>
-          <span>parkia<small>GESTIÓN DE PARQUEADERO</small></span>
+          <span>Parkia<small>PARQUEADEROS</small></span>
         </a>
         <p class="nav-label">MENÚ PRINCIPAL</p>
         <nav class="navigation" aria-label="Navegación principal">
-          <button class="nav-item active" data-view-target="overview"><span>▦</span>Resumen</button>
-          <button class="nav-item" data-view-target="entries"><span>↔</span>Entradas y salidas</button>
-          <button class="nav-item" data-view-target="people"><span>♙</span>Clientes y vehículos</button>
-          <button class="nav-item" data-view-target="spaces"><span>▤</span>Plazas</button>
+          <button class="nav-item active" data-view-target="overview"><span aria-hidden="true">▦</span>Resumen</button>
+          <button class="nav-item" data-view-target="entries"><span aria-hidden="true">↔</span>Entradas y salidas</button>
+          <button class="nav-item" data-view-target="people"><span aria-hidden="true">♙</span>Clientes y vehículos</button>
+          <button class="nav-item" data-view-target="spaces"><span aria-hidden="true">▤</span>Plazas</button>
         </nav>
         <div class="sidebar-bottom">
           <span class="status-dot"></span>
@@ -32,25 +32,45 @@
         <header class="topbar">
           <div class="mobile-brand"><span class="brand-mark">P</span> parkia</div>
           <div class="breadcrumb">Parqueadero <span>/</span> <strong id="page-title">Resumen</strong></div>
-          <button class="button button-primary top-action" data-view-target="entries">＋ <span>Registrar entrada</span></button>
+          <div class="topbar-right">
+            <span class="topbar-status"><span class="live-dot"></span> En tiempo real</span>
+            <button class="button button-primary top-action" data-view-target="entries">＋ <span>Registrar entrada</span></button>
+          </div>
         </header>
 
         <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
 
         <section class="view active" id="view-overview">
           <div class="page-heading">
-            <div><p class="eyebrow">CENTRO DE OPERACIONES</p><h1>Resumen del parqueadero</h1><p class="muted">Estado de ocupación y actividad en tiempo real.</p></div>
-            <div class="today-chip"><span class="live-dot"></span> Operación en curso</div>
+            <div><p class="eyebrow">CENTRO DE OPERACIONES</p><h1>Resumen del parqueadero</h1><p class="muted">Bienvenido al centro de operaciones. Aquí tienes el estado actual de tu parqueadero.</p></div>
+            <div class="today-chip"><span class="today-icon">◷</span><span id="current-datetime">Operación en curso</span></div>
           </div>
           <div class="stats-grid">
-            <article class="stat-card"><div class="stat-icon icon-dark">▤</div><div class="stat-label">Capacidad total</div><div class="stat-value" id="stat-total">—</div><div class="stat-foot">plazas registradas</div></article>
-            <article class="stat-card"><div class="stat-icon icon-green">↗</div><div class="stat-label">Plazas disponibles</div><div class="stat-value" id="stat-available">—</div><div class="stat-foot">listas para recibir vehículos</div></article>
-            <article class="stat-card"><div class="stat-icon icon-orange">◉</div><div class="stat-label">Plazas ocupadas</div><div class="stat-value" id="stat-occupied">—</div><div class="stat-foot">estancias activas</div></article>
+            <article class="stat-card stat-total"><div class="stat-icon">▤</div><div class="stat-label">Capacidad total</div><div class="stat-value" id="stat-total">—</div><div class="stat-foot">plazas registradas</div></article>
+            <article class="stat-card stat-occupied"><div class="stat-icon">🚘</div><div class="stat-label">Plazas ocupadas</div><div class="stat-value" id="stat-occupied">—</div><div class="stat-foot">vehículos dentro</div></article>
+            <article class="stat-card stat-available"><div class="stat-icon">🚗</div><div class="stat-label">Plazas disponibles</div><div class="stat-value" id="stat-available">—</div><div class="stat-foot">listas para recibir vehículos</div></article>
+            <article class="stat-card stat-active"><div class="stat-icon">↔</div><div class="stat-label">Estancias activas</div><div class="stat-value" id="stat-active">—</div><div class="stat-foot">operaciones en curso</div></article>
           </div>
-          <section class="panel">
-            <div class="panel-heading"><div><h2>Vehículos en el parqueadero</h2><p class="muted">Estancias que continúan activas</p></div><button class="text-button" data-view-target="entries">Ver entradas y salidas →</button></div>
-            <div class="table-wrap"><table><thead><tr><th>VEHÍCULO</th><th>CLIENTE</th><th>PLAZA</th><th>HORA DE ENTRADA</th><th>OPERADOR</th><th></th></tr></thead><tbody id="active-stays"></tbody></table></div>
-            <div class="empty-state" id="empty-overview" hidden><span>✓</span><strong>Todo despejado</strong><p>No hay vehículos dentro del parqueadero.</p></div>
+          <div class="dashboard-grid">
+            <section class="panel parking-panel">
+              <div class="panel-heading"><div><h2><span class="heading-icon">⌖</span> Estado del parqueadero</h2><p class="muted">Ocupación actual de cada plaza</p></div><span class="live-badge"><span class="live-dot"></span> En tiempo real</span></div>
+              <div class="parking-lot" id="parking-lot" aria-label="Mapa de plazas del parqueadero"></div>
+              <div class="parking-legend"><span><i class="legend-dot available-dot"></i>Disponible</span><span><i class="legend-dot occupied-dot"></i>Ocupada</span><span><i class="legend-dot"></i>Sin plazas</span></div>
+              <div class="empty-state" id="empty-overview" hidden><span>＋</span><strong>Aún no hay plazas</strong><p>Agrega una plaza para visualizar la ocupación.</p></div>
+            </section>
+            <section class="panel activity-panel">
+              <div class="panel-heading"><div><h2><span class="heading-icon">ϟ</span> Estancias activas</h2><p class="muted">Vehículos dentro ahora</p></div><button class="text-button" data-view-target="entries">Ver todas →</button></div>
+              <div class="activity-list" id="active-stays"></div>
+              <div class="empty-state" id="empty-activity" hidden><span>✓</span><strong>Todo despejado</strong><p>No hay vehículos dentro del parqueadero.</p></div>
+            </section>
+          </div>
+          <section class="quick-actions">
+            <h2><span class="heading-icon">↗</span> Accesos rápidos</h2>
+            <div class="quick-action-list">
+              <button class="quick-action quick-primary" data-view-target="entries"><span>＋</span>Registrar entrada</button>
+              <button class="quick-action" data-view-target="people"><span>♙</span>Clientes y vehículos</button>
+              <button class="quick-action" data-view-target="spaces"><span>▤</span>Administrar plazas</button>
+            </div>
           </section>
         </section>
 

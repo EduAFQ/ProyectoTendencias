@@ -64,16 +64,44 @@ function renderStayRows(stays, target) {
     </tr>`).join("");
 }
 
+function renderParkingLot(plazas, stays) {
+  const activeBySpace = new Map(stays.map((stay) => [stay.plaza_id, stay]));
+  $("#parking-lot").innerHTML = plazas.map((space) => {
+    const stay = activeBySpace.get(space.id);
+    return `
+      <article class="parking-space ${stay ? "is-occupied" : "is-available"}" title="${escapeHtml(space.codigo)}: ${stay ? `ocupada por ${escapeHtml(stay.matricula)}` : "disponible"}">
+        <span class="parking-space-code">${escapeHtml(space.codigo)}</span>
+        <span class="parking-car" aria-hidden="true">${stay ? "🚘" : "✓"}</span>
+        <span class="parking-space-status">${stay ? escapeHtml(stay.matricula) : "Disponible"}</span>
+      </article>`;
+  }).join("");
+}
+
+function renderActivity(stays) {
+  $("#active-stays").innerHTML = stays.map((stay) => `
+    <article class="activity-item">
+      <span class="activity-icon">${stay.matricula ? "🚘" : "↔"}</span>
+      <div class="activity-copy">
+        <strong>${escapeHtml(stay.matricula)} <span>· ${escapeHtml(stay.plaza)}</span></strong>
+        <small>${escapeHtml(stay.cliente)} · ${escapeHtml(formatDate(stay.entrada))}</small>
+      </div>
+      <span class="activity-status" aria-label="Estancia activa"></span>
+    </article>`).join("");
+}
+
 function render() {
   const { dashboard, clientes, vehiculos, plazas, operadores } = state;
   $("#stat-total").textContent = dashboard.plazas_total;
   $("#stat-available").textContent = dashboard.plazas_disponibles;
   $("#stat-occupied").textContent = dashboard.plazas_ocupadas;
+  $("#stat-active").textContent = dashboard.estancias_activas.length;
   $("#active-count").textContent = `${dashboard.estancias_activas.length} activas`;
 
-  renderStayRows(dashboard.estancias_activas, "#active-stays");
   renderStayRows(dashboard.estancias_activas, "#entry-stays");
-  $("#empty-overview").hidden = dashboard.estancias_activas.length > 0;
+  renderParkingLot(plazas, dashboard.estancias_activas);
+  renderActivity(dashboard.estancias_activas);
+  $("#empty-overview").hidden = plazas.length > 0;
+  $("#empty-activity").hidden = dashboard.estancias_activas.length > 0;
   $("#empty-entries").hidden = dashboard.estancias_activas.length > 0;
 
   $("#client-count").textContent = `${clientes.length} ${clientes.length === 1 ? "cliente" : "clientes"}`;
@@ -252,3 +280,18 @@ document.body.addEventListener("click", async (event) => {
 });
 
 loadAll();
+
+function updateDateTime() {
+  const now = new Date();
+  $("#current-datetime").textContent = new Intl.DateTimeFormat("es-CO", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(now);
+}
+
+updateDateTime();
+setInterval(updateDateTime, 60_000);
