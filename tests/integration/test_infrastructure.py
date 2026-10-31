@@ -1,3 +1,5 @@
+"""Pruebas de integración con SQL y el ensamblado Flask."""
+
 from datetime import datetime, timezone
 
 import pytest
@@ -5,19 +7,6 @@ import pytest
 from flaskr import create_app
 from flaskr.domain.models import Parking
 from flaskr.infrastructure.adaptadorSalida.parkingRepositorySQL import ParkingRepositorySQL
-from flaskr.infrastructure.db.engine import crear_engine
-from flaskr.infrastructure.db.models.parkingOrm import Base
-from flaskr.infrastructure.db.session import crear_fabrica_sesiones
-from flaskr.services.parkingServices import ParkingServices
-
-
-@pytest.fixture
-def servicio_sql(tmp_path):
-    engine = crear_engine(f"sqlite:///{tmp_path / 'parking-infrastructure-test.db'}")
-    Base.metadata.create_all(engine)
-    repositorio = ParkingRepositorySQL(crear_fabrica_sesiones(engine))
-    yield ParkingServices(repositorio)
-    engine.dispose()
 
 
 def test_persistencia_sql_normaliza_horas_a_utc_y_aplica_indice_unico(

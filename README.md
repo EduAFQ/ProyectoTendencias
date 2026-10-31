@@ -25,9 +25,28 @@ La configuración predeterminada usa `sqlite:///parking.db`. Para cambiarla, def
 
 ## Ejecutar pruebas
 
+Pruebas unitarias de las reglas del dominio, con cobertura mínima del 90 %:
+
+```powershell
+python -m coverage run --source=flaskr.services.parkingServices -m pytest tests/unit/test_parking_service.py
+python -m coverage report --fail-under=90
+```
+
+Pruebas de integración de API y persistencia SQL:
+
+```powershell
+python -m pytest tests/integration
+```
+
+Para ejecutar toda la suite:
+
 ```powershell
 python -m pytest
 ```
+
+Las pruebas unitarias y de integración están en `tests/unit` y
+`tests/integration`, respectivamente. El workflow CD ejecuta toda la suite y
+requiere al menos un 90 % de cobertura del servicio del dominio.
 
 ## Revisar reglas de Pylint
 
@@ -38,9 +57,9 @@ La configuración del proyecto aplica `unused-variable`, `unused-import` y
 python -m pylint flaskr tests
 ```
 
-En cada `push` a la rama `development`, GitHub Actions ejecuta Pylint sobre
-`flaskr` y `tests`. El workflow requiere una puntuación superior al 80 %
-(8.01 de 10 o más); una puntuación inferior hace fallar la ejecución.
+El workflow CD ejecuta Pylint sobre `flaskr` y `tests` en pull requests hacia
+`main` o `development`, y en pushes a esas ramas. Requiere una puntuación
+mínima de 8.01 sobre 10.
 
 ## Iniciar la aplicación web
 
@@ -66,10 +85,11 @@ docker compose up --build
 La aplicación de desarrollo queda disponible en <http://localhost:5000>. El
 código fuente se monta en el contenedor y Flask se ejecuta en modo debug.
 
-El workflow `.github/workflows/publish-container.yml` construye la imagen en
-cada pull request para verificar el Dockerfile, y publica en GHCR al hacer push
-a `main` o `development`, o al crear una etiqueta `v*`. Las etiquetas de imagen
-corresponden a la rama o etiqueta y al commit. El workflow usa
+El workflow `.github/workflows/cd.yml` ejecuta primero las pruebas, cobertura y
+Pylint. Solo si pasan construye la imagen; en pull requests valida el build sin
+publicar, y en pushes a `main` o `development` y etiquetas `v*` publica en
+GHCR. Las etiquetas de imagen corresponden a la rama o etiqueta y al commit.
+El workflow usa
 `GITHUB_TOKEN`; no requiere un secreto de publicación adicional. Asegúrate de
 que Actions tenga permiso para escribir paquetes y configura como público el
 paquete de GHCR si el servidor de despliegue debe descargarlo sin autenticarse.

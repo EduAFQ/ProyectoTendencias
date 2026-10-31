@@ -1,3 +1,5 @@
+"""Fixtures unitarios aislados de la infraestructura."""
+
 import pytest
 
 from flaskr.domain.models import Cliente, Parking, Plaza, Usuario, Vehiculo
