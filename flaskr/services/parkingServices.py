@@ -107,6 +107,17 @@ class ParkingServices:
     def listar_estancias_activas(self):
         return self.repositorio.listar_estancias_activas()
 
+    def listar_estancias_finalizadas(
+        self, desde=None, hasta=None, cliente_id=None, antes_de=None, limite=20
+    ):
+        return self.repositorio.listar_estancias_finalizadas(
+            desde=desde,
+            hasta=hasta,
+            cliente_id=cliente_id,
+            antes_de=antes_de,
+            limite=limite,
+        )
+
     @staticmethod
     def _texto_requerido(valor, campo):
         if not isinstance(valor, str) or not valor.strip():

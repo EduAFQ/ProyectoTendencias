@@ -61,3 +61,8 @@ class ParkingRepository(ABC):
 
     @abstractmethod
     def listar_estancias_activas(self): ...
+
+    @abstractmethod
+    def listar_estancias_finalizadas(
+        self, desde=None, hasta=None, cliente_id=None, antes_de=None, limite=20
+    ): ...

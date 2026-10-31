@@ -6,6 +6,13 @@ const state = {
   operadores: [],
   editingSpaceId: null,
   toastTimer: null,
+  history: {
+    rows: [],
+    cursor: null,
+    hasMore: false,
+    requestId: 0,
+    loading: false,
+  },
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -47,9 +54,87 @@ function showView(name) {
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.classList.toggle("active", item.dataset.viewTarget === name);
   });
-  const titles = { overview: "Resumen", entries: "Entradas y salidas", people: "Clientes y vehículos", spaces: "Plazas" };
+  const titles = {
+    overview: "Resumen",
+    entries: "Entradas y salidas",
+    history: "Historial",
+    people: "Clientes y vehículos",
+    spaces: "Plazas",
+  };
   $("#page-title").textContent = titles[name] || "Resumen";
   window.scrollTo({ top: 0, behavior: "smooth" });
+  if (name === "history") loadHistory(true);
+}
+
+function formatDuration(seconds) {
+  const totalSeconds = Math.max(0, seconds);
+  if (totalSeconds < 60) return `${totalSeconds} s`;
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days) return `${days} d ${hours} h ${minutes} min`;
+  if (hours) return `${hours} h ${minutes} min`;
+  return `${minutes} min`;
+}
+
+function renderHistory() {
+  $("#history-table").innerHTML = state.history.rows.map((stay) => `
+    <tr>
+      <td><span class="vehicle-pill">${escapeHtml(stay.matricula)}</span></td>
+      <td>${escapeHtml(stay.cliente)}</td>
+      <td>${escapeHtml(stay.plaza)}</td>
+      <td>${escapeHtml(stay.operador)}</td>
+      <td>${escapeHtml(formatDate(stay.entrada))}</td>
+      <td>${escapeHtml(formatDate(stay.salida))}</td>
+      <td><span class="duration-pill">${escapeHtml(formatDuration(stay.duracion_segundos))}</span></td>
+    </tr>`).join("");
+  const total = state.history.rows.length;
+  $("#history-count").textContent = `${total} ${total === 1 ? "registro" : "registros"}`;
+  $("#empty-history").hidden = total > 0;
+  $("#history-more").hidden = !state.history.hasMore;
+}
+
+async function loadHistory(reset = false) {
+  if (state.history.loading && !reset) return;
+  const requestId = reset ? state.history.requestId + 1 : state.history.requestId;
+  state.history.requestId = requestId;
+  state.history.loading = true;
+  if (reset) {
+    state.history.rows = [];
+    state.history.cursor = null;
+    state.history.hasMore = false;
+    renderHistory();
+  }
+
+  const button = $("#history-more");
+  button.disabled = true;
+  button.textContent = "Cargando...";
+  try {
+    const params = new URLSearchParams({ limite: "20" });
+    const filters = new FormData($("#history-filter-form"));
+    ["desde", "hasta", "cliente_id"].forEach((key) => {
+      const value = filters.get(key);
+      if (value) params.set(key, value);
+    });
+    if (!reset && state.history.cursor) params.set("cursor", state.history.cursor);
+    const result = await api(`/estancias/historial?${params.toString()}`);
+    if (requestId !== state.history.requestId) return;
+    state.history.rows = reset
+      ? result.estancias
+      : [...state.history.rows, ...result.estancias];
+    state.history.cursor = result.siguiente_cursor;
+    state.history.hasMore = result.hay_mas;
+    renderHistory();
+  } catch (error) {
+    if (requestId === state.history.requestId) notify(error.message, true);
+  } finally {
+    if (requestId === state.history.requestId) {
+      state.history.loading = false;
+      button.disabled = false;
+      button.textContent = "Cargar más";
+    }
+  }
 }
 
 function renderStayRows(stays, target) {
@@ -136,6 +221,10 @@ function render() {
     `<option value="${operator.id}">${escapeHtml(operator.nombre)}</option>`).join("")}`;
   $("#vehicle-client").innerHTML = `<option value="">Selecciona un cliente</option>${clientes.map((client) =>
     `<option value="${client.id}">${escapeHtml(client.nombre)}</option>`).join("")}`;
+  const selectedHistoryClient = $("#history-client").value;
+  $("#history-client").innerHTML = `<option value="">Todos los clientes</option>${clientes.map((client) =>
+    `<option value="${client.id}">${escapeHtml(client.nombre)}</option>`).join("")}`;
+  $("#history-client").value = selectedHistoryClient;
 }
 
 async function loadAll() {
@@ -171,6 +260,18 @@ async function submitForm(form, path, successMessage, transform = (values) => va
 document.querySelectorAll("[data-view-target]").forEach((button) => {
   button.addEventListener("click", () => showView(button.dataset.viewTarget));
 });
+
+$("#history-filter-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  loadHistory(true);
+});
+
+$("#history-clear").addEventListener("click", () => {
+  $("#history-filter-form").reset();
+  loadHistory(true);
+});
+
+$("#history-more").addEventListener("click", () => loadHistory());
 
 $("#entry-form").addEventListener("submit", (event) => {
   event.preventDefault();

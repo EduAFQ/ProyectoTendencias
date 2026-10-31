@@ -19,6 +19,7 @@
         <nav class="navigation" aria-label="Navegación principal">
           <button class="nav-item active" data-view-target="overview"><span aria-hidden="true">▦</span>Resumen</button>
           <button class="nav-item" data-view-target="entries"><span aria-hidden="true">↔</span>Entradas y salidas</button>
+          <button class="nav-item" data-view-target="history"><span aria-hidden="true">◷</span>Historial</button>
           <button class="nav-item" data-view-target="people"><span aria-hidden="true">♙</span>Clientes y vehículos</button>
           <button class="nav-item" data-view-target="spaces"><span aria-hidden="true">▤</span>Plazas</button>
         </nav>
@@ -90,6 +91,25 @@
             <div class="panel-heading"><div><h2>Estancias activas</h2><p class="muted">Registra la salida cuando el vehículo se retire.</p></div><span class="count-badge" id="active-count">0 activas</span></div>
             <div class="table-wrap"><table><thead><tr><th>VEHÍCULO</th><th>CLIENTE</th><th>PLAZA</th><th>HORA DE ENTRADA</th><th>OPERADOR</th><th>ACCIÓN</th></tr></thead><tbody id="entry-stays"></tbody></table></div>
             <div class="empty-state" id="empty-entries" hidden><span>↔</span><strong>Sin estancias activas</strong><p>Las nuevas entradas aparecerán aquí.</p></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-history">
+          <div class="page-heading"><div><p class="eyebrow">REGISTROS</p><h1>Historial de estancias</h1><p class="muted">Consulta las entradas y salidas registradas en el parqueadero.</p></div></div>
+          <section class="panel history-filter-panel">
+            <div class="panel-heading"><div><h2>Filtrar historial</h2><p class="muted">Los resultados incluyen solo estancias finalizadas.</p></div></div>
+            <form id="history-filter-form" class="history-filters">
+              <label>Desde<input id="history-from" name="desde" type="date"></label>
+              <label>Hasta<input id="history-to" name="hasta" type="date"></label>
+              <label>Cliente<select id="history-client" name="cliente_id"><option value="">Todos los clientes</option></select></label>
+              <div class="history-filter-actions"><button class="button button-primary" type="submit">Aplicar filtros</button><button class="button button-secondary" id="history-clear" type="button">Limpiar</button></div>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Estancias finalizadas</h2><p class="muted">Ordenadas de la más reciente a la más antigua.</p></div><span class="count-badge" id="history-count">0 registros</span></div>
+            <div class="table-wrap"><table><thead><tr><th>MATRÍCULA</th><th>CLIENTE</th><th>PLAZA</th><th>OPERADOR</th><th>ENTRADA</th><th>SALIDA</th><th>DURACIÓN</th></tr></thead><tbody id="history-table"></tbody></table></div>
+            <div class="empty-state" id="empty-history" hidden><span>◷</span><strong>Sin estancias finalizadas</strong><p>Los registros que coincidan con tus filtros aparecerán aquí.</p></div>
+            <div class="history-more-wrap"><button class="button button-secondary" id="history-more" type="button" hidden>Cargar más</button></div>
           </section>
         </section>
 

@@ -113,6 +113,33 @@ class ParkingRepositorySQL(ParkingRepository):
             rows = session.scalars(select(ParkingORM).where(ParkingORM.salida.is_(None)).order_by(ParkingORM.entrada))
             return [self._parking(row) for row in rows]
 
+    def listar_estancias_finalizadas(
+        self, desde=None, hasta=None, cliente_id=None, antes_de=None, limite=20
+    ):
+        query = select(ParkingORM).where(ParkingORM.salida.is_not(None))
+        if desde is not None:
+            query = query.where(ParkingORM.entrada >= desde)
+        if hasta is not None:
+            query = query.where(ParkingORM.entrada < hasta)
+        if cliente_id is not None:
+            query = query.join(
+                VehiculoORM, ParkingORM.vehiculo_id == VehiculoORM.id
+            ).where(VehiculoORM.cliente_id == cliente_id)
+        if antes_de is not None:
+            entrada, identificador = antes_de
+            query = query.where(
+                (ParkingORM.entrada < entrada)
+                | (
+                    (ParkingORM.entrada == entrada)
+                    & (ParkingORM.id < identificador)
+                )
+            )
+        query = query.order_by(
+            ParkingORM.entrada.desc(), ParkingORM.id.desc()
+        ).limit(limite)
+        with self.session_factory() as session:
+            return [self._parking(row) for row in session.scalars(query)]
+
     def _estancia_activa(self, condicion):
         with self.session_factory() as session:
             row = session.scalar(select(ParkingORM).where(condicion, ParkingORM.salida.is_(None)))
