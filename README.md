@@ -52,6 +52,45 @@ python -m flask --app flaskr:create_app run --debug
 
 Abre <http://127.0.0.1:5000>. La interfaz y la API se sirven desde el mismo origen. Para una base de datos distinta a `parking.db`, configura `PARKING_DATABASE_URL` antes de inicializar y arrancar la aplicación.
 
+## Desplegar con Docker y GHCR
+
+La imagen utiliza Gunicorn y ejecuta la inicialización de las tablas al arrancar.
+La base SQLite se almacena en un volumen persistente (`/data/parking.db`).
+
+Para desarrollo local, con Docker Compose:
+
+```powershell
+docker compose up --build
+```
+
+La aplicación de desarrollo queda disponible en <http://localhost:5000>. El
+código fuente se monta en el contenedor y Flask se ejecuta en modo debug.
+
+El workflow `.github/workflows/publish-container.yml` construye la imagen en
+cada pull request para verificar el Dockerfile, y publica en GHCR al hacer push
+a `main` o `development`, o al crear una etiqueta `v*`. Las etiquetas de imagen
+corresponden a la rama o etiqueta y al commit. El workflow usa
+`GITHUB_TOKEN`; no requiere un secreto de publicación adicional. Asegúrate de
+que Actions tenga permiso para escribir paquetes y configura como público el
+paquete de GHCR si el servidor de despliegue debe descargarlo sin autenticarse.
+La rama predeterminada también publica la etiqueta `latest`.
+
+Para producción, configura el acceso a GHCR si el paquete es privado y despliega:
+
+```powershell
+docker login ghcr.io
+docker compose -f compose.prod.yaml pull
+docker compose -f compose.prod.yaml up -d
+```
+
+`PORT` permite cambiar el puerto publicado (por defecto `5000`) e
+`IMAGE_NAME` permite seleccionar otra etiqueta de imagen; ambos se pueden
+definir en el entorno o en un archivo `.env` local. El volumen `parking_data`
+conserva los datos al reemplazar o reiniciar el contenedor. Esta configuración
+SQLite está pensada para una única instancia de la aplicación; para escalar a
+varias réplicas, usa una base de datos externa compatible con SQLAlchemy y
+configura `PARKING_DATABASE_URL`.
+
 ## API REST
 
 Las respuestas de error usan el formato `{"error":{"code":"...","message":"..."}}`.
