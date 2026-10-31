@@ -60,6 +60,7 @@ Las respuestas de error usan el formato `{"error":{"code":"...","message":"..."}
 | --- | --- | --- |
 | `GET` | `/api/dashboard` | Resumen de ocupación y estancias activas |
 | `GET` | `/api/estancias/activas` | Lista estancias abiertas |
+| `GET` | `/api/estancias/historial` | Historial de estancias finalizadas, ordenado de más reciente a más antigua |
 | `POST` | `/api/estancias` | Registra entrada con `vehiculo_id`, `plaza_id`, `usuario_id` |
 | `POST` | `/api/estancias/{id}/salida` | Registra la salida de una estancia activa |
 | `GET`, `POST` | `/api/clientes` | Lista o crea clientes (`nombre`, `email` opcional) |
@@ -71,6 +72,11 @@ Las respuestas de error usan el formato `{"error":{"code":"...","message":"..."}
 | `DELETE` | `/api/plazas/{id}` | Elimina una plaza sin estancias asociadas |
 
 La interfaz permite registrar operadores desde el formulario de entrada, para que el flujo no dependa de cargar usuarios manualmente en la base de datos.
+
+El historial admite `desde` y `hasta` (`AAAA-MM-DD`, inclusivos en la zona horaria
+`America/Bogota`), `cliente_id`, `limite` (20 por defecto, máximo 100) y
+`cursor` para cargar la siguiente página. La respuesta contiene `estancias`,
+`hay_mas` y `siguiente_cursor`; cada estancia incluye `duracion_segundos`.
 
 ## Desplegar el servidor MCP
 

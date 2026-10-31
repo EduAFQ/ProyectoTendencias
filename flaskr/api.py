@@ -1,3 +1,8 @@
+import base64
+import binascii
+import json
+from datetime import date, datetime, time, timedelta, timezone
+
 from flask import Blueprint, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 
@@ -5,6 +10,9 @@ from flaskr.services.parkingServices import Conflicto, NoEncontrado, ParkingServ
 
 
 api = Blueprint("api", __name__, url_prefix="/api")
+_ZONA_HORARIA_APLICACION = timezone(timedelta(hours=-5))
+_LIMITE_HISTORIAL = 20
+_LIMITE_HISTORIAL_MAXIMO = 100
 
 
 def _servicio():
@@ -55,6 +63,52 @@ def _serializar_estancias(estancias, servicio):
     return resultado
 
 
+def _fecha_historial(nombre, sumar_dia=False):
+    valor = request.args.get(nombre)
+    if not valor:
+        return None
+    try:
+        fecha = date.fromisoformat(valor)
+        if fecha.isoformat() != valor:
+            raise ValueError
+        if sumar_dia:
+            fecha += timedelta(days=1)
+    except (OverflowError, ValueError) as error:
+        raise Validacion(f"El parámetro {nombre} debe tener formato AAAA-MM-DD") from error
+    momento_local = datetime.combine(fecha, time.min, tzinfo=_ZONA_HORARIA_APLICACION)
+    return momento_local.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def _cursor_historial(valor):
+    if not valor:
+        return None
+    try:
+        relleno = "=" * (-len(valor) % 4)
+        contenido = base64.b64decode(valor + relleno, altchars=b"-_", validate=True)
+        datos = json.loads(contenido)
+        entrada = datetime.fromisoformat(datos["entrada"])
+        identificador = datos["id"]
+    except (binascii.Error, UnicodeDecodeError, ValueError, TypeError, KeyError) as error:
+        raise Validacion("El cursor del historial no es válido") from error
+    if (
+        not isinstance(datos, dict)
+        or entrada.tzinfo is None
+        or isinstance(identificador, bool)
+        or not isinstance(identificador, int)
+        or identificador < 1
+    ):
+        raise Validacion("El cursor del historial no es válido")
+    return entrada.astimezone(timezone.utc).replace(tzinfo=None), identificador
+
+
+def _codificar_cursor(estancia):
+    datos = json.dumps({
+        "entrada": estancia.entrada.isoformat(),
+        "id": estancia.id,
+    }).encode("utf-8")
+    return base64.urlsafe_b64encode(datos).decode("ascii").rstrip("=")
+
+
 def _error(mensaje, status, codigo):
     return jsonify(error={"code": codigo, "message": mensaje}), status
 
@@ -97,6 +151,52 @@ def dashboard():
 def listar_estancias_activas():
     servicio = _servicio()
     return jsonify(_serializar_estancias(servicio.listar_estancias_activas(), servicio))
+
+
+@api.get("/estancias/historial")
+def listar_historial_estancias():
+    desde = _fecha_historial("desde")
+    hasta = _fecha_historial("hasta", sumar_dia=True)
+    if desde is not None and hasta is not None and desde >= hasta:
+        raise Validacion("La fecha desde no puede ser posterior a la fecha hasta")
+
+    cliente_id = request.args.get("cliente_id")
+    if cliente_id is not None:
+        try:
+            cliente_id = int(cliente_id)
+        except ValueError as error:
+            raise Validacion("El parámetro cliente_id debe ser un identificador válido") from error
+        if cliente_id < 1:
+            raise Validacion("El parámetro cliente_id debe ser un identificador válido")
+
+    try:
+        limite = int(request.args.get("limite", _LIMITE_HISTORIAL))
+    except ValueError as error:
+        raise Validacion("El parámetro limite debe ser un número entero") from error
+    if not 1 <= limite <= _LIMITE_HISTORIAL_MAXIMO:
+        raise Validacion(f"El parámetro limite debe estar entre 1 y {_LIMITE_HISTORIAL_MAXIMO}")
+
+    cursor = _cursor_historial(request.args.get("cursor"))
+    servicio = _servicio()
+    estancias = servicio.listar_estancias_finalizadas(
+        desde=desde,
+        hasta=hasta,
+        cliente_id=cliente_id,
+        antes_de=cursor,
+        limite=limite + 1,
+    )
+    hay_mas = len(estancias) > limite
+    pagina = estancias[:limite]
+    serializadas = _serializar_estancias(pagina, servicio)
+    for estancia, serializada in zip(pagina, serializadas):
+        serializada["duracion_segundos"] = int(
+            (estancia.salida - estancia.entrada).total_seconds()
+        )
+    return jsonify(
+        estancias=serializadas,
+        siguiente_cursor=_codificar_cursor(pagina[-1]) if hay_mas and pagina else None,
+        hay_mas=hay_mas,
+    )
 
 
 @api.post("/estancias")
